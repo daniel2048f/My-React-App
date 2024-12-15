@@ -1,6 +1,6 @@
 # ESP32 IoT Dashboard Project
 
-Este proyecto consta de un sistema IoT que recolecta datos de temperatura y humedad mediante un ESP32, los almacena en AWS DynamoDB y los visualiza en una aplicación web React. Además, permite observar datos en tiempo real y consultar datos históricos, integrando tecnologías modernas como AWS Lambda y Chart.js.
+Este proyecto consta de un sistema IoT que recolecta datos de temperatura y humedad mediante un ESP32, los almacena en AWS DynamoDB y los visualiza en una aplicación web React. Además, permite observar datos en tiempo real utilizando WebSockets y consultar datos históricos, integrando tecnologías modernas como AWS Lambda y Chart.js.
 
 ## Características principales
 
@@ -14,8 +14,7 @@ Este proyecto consta de un sistema IoT que recolecta datos de temperatura y hume
 
 ### **1. Backend (AWS Lambda)**
 - **`lambda_function.py`**:
-  - Recibe solicitudes HTTP del frontend.
-  - Procesa datos enviados por el ESP32.
+  - Procesa datos enviados por el ESP32 a través de WebSockets.
   - Consulta y guarda datos en AWS DynamoDB.
   - Soporta endpoints para:
     - Envío de datos desde el ESP32.
@@ -23,8 +22,8 @@ Este proyecto consta de un sistema IoT que recolecta datos de temperatura y hume
 
 ### **2. Firmware ESP32**
 - **`esp32_code.ino`**:
-  - Configura el sensor DHT22 para medir temperatura y humedad.
-  - Envía datos periódicamente al backend mediante HTTP POST.
+  - Configura el sensor DHT11 para medir temperatura y humedad.
+  - Envía datos periódicamente al backend mediante WebSockets.
   - Manejo básico de errores de conexión.
 
 ### **3. Frontend (React)**
@@ -32,14 +31,14 @@ Este proyecto consta de un sistema IoT que recolecta datos de temperatura y hume
   - Punto de entrada de la aplicación React.
   - Maneja la navegación y estados globales.
 - **`components/RealTimeChart.js`**:
-  - Componente para visualizar datos en tiempo real.
+  - Componente para visualizar datos en tiempo real utilizando WebSockets.
   - Actualización automática de datos desde el backend.
 - **`components/HistoricalChart.js`**:
   - Permite seleccionar un rango de fechas y muestra gráficos históricos.
 - **`components/Navbar.js`**:
   - Barra de navegación para moverse entre secciones.
 - **`utils/api.js`**:
-  - Manejo de las solicitudes HTTP al backend (GET y POST).
+  - Manejo de las solicitudes HTTP al backend (GET y POST) para la visualización de los datos históricos.
 
 ### **4. Infraestructura AWS**
 - **DynamoDB**:
@@ -86,10 +85,11 @@ Este proyecto consta de un sistema IoT que recolecta datos de temperatura y hume
 - **Hardware**: ESP32, sensor DHT11.
 - **Backend**: AWS Lambda, AWS DynamoDB, Python.
 - **Frontend**: React, Chart.js.
-- **Comunicación**: HTTP POST y GET.
+- **Comunicación**: WebSockets, HTTP GET.
 
 ## Créditos
-Proyecto desarrollado como parte de un sistema IoT para el curso electivo de Internet de las Cosas de la maestria de Análitica de Datos de la Facultad de Ingeniería de la Universidad del Quindío, integrando tecnologías web y de hardware.
+Proyecto desarrollado como parte de un sistema IoT para el curso electivo Internet de las Cosas del programa Maestría en Ingeniería con enfásis en Análitica de Datos de la Universidad del Quindío, integrando tecnologías web y de hardware.
+Desarrollado por los estudiantes Daniel Alejandro Cangrejo López y Mariana Jiménez Duarte con base en los códigos base suministrados por el docente Alexander López Parrado.
 
 ---
 Cualquier duda o mejora, ¡no dudes en contribuir! 🚀
