@@ -89,6 +89,7 @@ Este proyecto consta de un sistema IoT que recolecta datos de temperatura y hume
 
 ## Créditos
 Proyecto desarrollado como parte de un sistema IoT para el curso electivo Internet de las Cosas del programa Maestría en Ingeniería con enfásis en Análitica de Datos de la Universidad del Quindío, integrando tecnologías web y de hardware.
+
 Desarrollado por los estudiantes Daniel Alejandro Cangrejo López y Mariana Jiménez Duarte con base en los códigos base suministrados por el docente Alexander López Parrado.
 
 ---
