@@ -83,13 +83,13 @@ Este proyecto consta de un sistema IoT que recolecta datos de temperatura y hume
 
 ## Tecnologías utilizadas
 
-- **Hardware**: ESP32, sensor DHT22.
+- **Hardware**: ESP32, sensor DHT11.
 - **Backend**: AWS Lambda, AWS DynamoDB, Python.
 - **Frontend**: React, Chart.js.
 - **Comunicación**: HTTP POST y GET.
 
 ## Créditos
-Proyecto desarrollado como parte de un sistema IoT para monitoreo ambiental, integrando tecnologías web y de hardware.
+Proyecto desarrollado como parte de un sistema IoT para el curso electivo de Internet de las Cosas de la maestria de Análitica de Datos de la Facultad de Ingeniería de la Universidad del Quindío, integrando tecnologías web y de hardware.
 
 ---
 Cualquier duda o mejora, ¡no dudes en contribuir! 🚀
