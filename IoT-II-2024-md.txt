@@ -1,0 +1,92 @@
+import math
+import boto3
+from decimal import Decimal
+import json
+
+# Obtener recursos de DynamoDB y SES
+dynamodb = boto3.resource('dynamodb')
+ses_client = boto3.client('ses')  # Cliente SES
+
+# Correo del remitente registrado en SES
+SENDER_EMAIL = "iot.meng.2.2024@gmail.com"  # Reemplazar con tu correo verificado en SES
+# Correo del destinatario registrado en SES
+RECIPIENT_EMAIL = "daniela.cangrejol@uqvirtual.edu.co"  # Reemplazar con el correo del destinatario
+
+# Función Lambda
+def lambda_handler(event, context):
+    
+    # Verificar si el evento tiene el campo timestamp
+    if 'timestamp' in event:
+        # Obtener la tabla
+        table = dynamodb.Table('dht22_table_md')
+        
+        # Convertir temp y hum a Decimal si son floats o si pueden ser decimales
+        temp = Decimal(str(event['temp'])) if isinstance(event['temp'], (float, int)) else event['temp']
+        hum = Decimal(str(event['hum'])) if isinstance(event['hum'], (float, int)) else event['hum']
+        
+        # Guardar el item en la tabla
+        response = table.put_item(
+        Item={
+        'app_id': "sensor",  # Clave primaria
+        'timestamp': event['timestamp'],  # Clave de clasificación
+        'temp': temp,  # Guardado como Decimal
+        'hum': hum  # Guardado como Decimal
+        }
+        )
+        
+        # Imprimir la respuesta de put_item
+        print("PutItem succeeded:", response)
+        
+        # Obtener el item recién guardado
+        response = table.get_item(
+        Key={'app_id': "sensor", 'timestamp': event['timestamp']}
+        )
+        
+        # Imprimir la respuesta de get_item
+        print("GetItem succeeded:", response)
+        
+        table = dynamodb.Table('dht22_ws_connection_id_md')
+        response = table.get_item(
+        Key={'app_id': "connectionid"}
+        )
+        print(response)
+        
+        if 'Item' in response:
+            api_client = boto3.client('apigatewaymanagementapi',endpoint_url='https://q8bl57mzwa.execute-api.us-east-1.amazonaws.com/production/')
+            connectionId=response['Item']['id']
+            api_client.post_to_connection(ConnectionId=connectionId, Data=json.dumps({'temp': float (temp),'hum': float (hum) }))
+            print(connectionId)
+        
+        # Verificar si la temperatura supera los 26°C
+        if float(temp) > 26:
+            # Enviar correo usando SES
+            try:
+                response = ses_client.send_email(
+                    Source=SENDER_EMAIL,
+                    Destination={
+                        'ToAddresses': [
+                            RECIPIENT_EMAIL,
+                        ],
+                    },
+                    Message={
+                        'Subject': {
+                            'Data': 'Alerta de Temperatura Alta',
+                            'Charset': 'UTF-8'
+                        },
+                        'Body': {
+                            'Text': {
+                                'Data': f"Alerta: La temperatura ha superado los 26°C. Temperatura actual: {temp}°C.",
+                                'Charset': 'UTF-8'
+                            }
+                        }
+                    }
+                )
+                print("Correo enviado con éxito:", response)
+            except Exception as e:
+                print(f"Error al enviar el correo: {str(e)}")
+        
+        # Retornar la confirmación de que la base de datos fue actualizada
+        return "DB updated"
+    else:
+        # Retornar error si el campo 'timestamp' no está presente
+        return "Error: 'timestamp' field is required"

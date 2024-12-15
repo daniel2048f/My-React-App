@@ -1,0 +1,99 @@
+import json
+import boto3
+from decimal import Decimal
+from boto3.dynamodb.conditions import Key
+
+# Encoder personalizado para convertir Decimal a float en JSON
+class JSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return json.JSONEncoder.default(self, obj)
+
+def lambda_handler(event, context):
+    try:
+        # Obtener recurso de DynamoDB
+        print("Conectando a DynamoDB...")
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table('dht22_table_md')  
+        print("Tabla obtenida:", table)
+
+        # Verificar si la ruta es la correcta
+        if event['resource'] == '/data':
+            print("Recurso correcto: /data")
+
+            # Verificar si los parámetros de consulta existen
+            if 'queryStringParameters' not in event or event['queryStringParameters'] is None:
+                # Si no hay parámetros, escanear la tabla para obtener todos los items
+                print("No se pasaron parámetros de consulta. Escaneando todos los datos...")
+                scan_response = table.scan()
+                items = scan_response['Items']
+                print(f"Todos los elementos obtenidos: {items}")
+                
+                # Devolver los resultados del escaneo
+                return {
+                    'statusCode': 200,
+                    'headers': {
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps(items, cls=JSONEncoder)
+                }
+
+            # Obtener los parámetros de consulta
+            start_time = event['queryStringParameters'].get('start_time')
+            end_time = event['queryStringParameters'].get('end_time')
+
+            if not start_time or not end_time:
+                print(f"Parámetros faltantes: start_time={start_time}, end_time={end_time}")
+                return {
+                    'statusCode': 400,
+                    'body': json.dumps({'message': 'Both start_time and end_time must be provided'})
+                }
+
+            print(f"Recibidos start_time={start_time}, end_time={end_time}")
+
+            # Convertir los timestamps a enteros si no lo son
+            try:
+                start_time = int(start_time)
+                end_time = int(end_time)
+                print(f"start_time y end_time convertidos a enteros: {start_time}, {end_time}")
+            except ValueError as e:
+                print(f"Error al convertir los timestamps: {e}")
+                return {
+                    'statusCode': 400,
+                    'body': json.dumps({'message': 'start_time and end_time must be integers'})
+                }
+
+            # Consultar los datos en el rango de timestamps
+            print("Realizando consulta a DynamoDB...")
+            query_response = table.query(
+                KeyConditionExpression=Key('app_id').eq("sensor") & Key('timestamp').between(start_time, end_time)
+            )
+            items = query_response.get('Items', [])
+            print(f"Elementos obtenidos: {items}")
+
+            # Devolver los resultados con los valores Decimal convertidos a float
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps(items, cls=JSONEncoder)  # Usamos JSONEncoder personalizado
+            }
+
+        # Si la ruta no es '/data'
+        print("Ruta inválida.")
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'message': 'Invalid request'})
+        }
+    
+    except Exception as e:
+        # Manejo de errores para capturar el detalle del problema
+        print(f"Error: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'message': f"Internal server error: {str(e)}"})
+        }
+
+
